@@ -66,6 +66,7 @@
     <commons-lang.version>2.6</commons-lang.version>
     <rxjava.version>2.0.4</rxjava.version>
     <platform.version>9.0.0.0-SNAPSHOT</platform.version>
+    <pdi.version>${project.version}</pdi.version>
     <karaf.version>3.0.3</karaf.version>
 
     <!-- All 3 of these properties are required -->
@@ -200,6 +201,20 @@
     </profile>
   </profiles>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>pentaho-kettle</groupId>
+        <artifactId>kettle-core</artifactId>
+        <version>${pdi.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>pentaho-kettle</groupId>
+        <artifactId>kettle-engine</artifactId>
+        <version>${pdi.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <repositories>
     <repository>

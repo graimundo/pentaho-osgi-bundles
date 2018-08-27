@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
+
+  <service interface="org.pentaho.osgi.kettle.repository.locator.api.KettleRepositoryProvider" ranking="150">
+    <description>
+      This service supplies a kettle repository based on the information provided in the repositories.xml.
+      The repository name and the user and password used to connect to it are obtained from the following system properties:
+      repos.repoName, repos.user and repos.password.
+      The repository is initialized and connected to the first time it is accessed.
+    </description>
+    <bean class="org.pentaho.osgi.kettle.repository.locator.impl.plugin.PluginRepositoryProvider">
+      <property name="repoName"     value="${repos.repoName}"/>
+      <property name="repoUsername" value="${repos.user}"/>
+      <property name="repoPassword" value="${repos.password}"/>
+      <property name="repositoriesMeta">
+        <bean class="org.pentaho.di.repository.RepositoriesMeta"/>
+      </property>
+      <property name="pluginRegistry">
+        <bean class="org.pentaho.di.core.plugins.PluginRegistry" factory-method="getInstance"/>
+      </property>
+    </bean>
+  </service>
+
+</blueprint>
