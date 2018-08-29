@@ -17,12 +17,6 @@
 package org.pentaho.osgi.kettle.repository.locator.impl.plugin;
 
 import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.exception.KettlePluginException;
-import org.pentaho.di.core.plugins.PluginRegistry;
-import org.pentaho.di.core.plugins.RepositoryPluginType;
-import org.pentaho.di.repository.RepositoriesMeta;
-import org.pentaho.di.repository.Repository;
-import org.pentaho.di.repository.RepositoryMeta;
 import org.pentaho.osgi.kettle.repository.locator.api.KettleRepositoryProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,124 +30,60 @@ public final class PluginRepositoryProvider implements KettleRepositoryProvider 
   //region Properties
   private static final Logger logger = LoggerFactory.getLogger( PluginRepositoryProvider.class );
 
-  public String getRepoName() {
-    return repoName;
+  public String getUsername() {
+    return username;
   }
-  public void setRepoName( String repoName ) {
-    this.repoName = repoName;
-    this.resetRepository();
+  public void setUsername( String repoUsername ) {
+    this.username = repoUsername;
+    this.shouldReconnect = true;
   }
-  private String repoName;
+  private String username;
 
-  public String getRepoUsername() {
-    return repoUsername;
+  public String getPassword() {
+    return password;
   }
-  public void setRepoUsername( String repoUsername ) {
-    this.repoUsername = repoUsername;
-    this.resetRepository();
+  public void setPassword( String password) {
+    this.password = password;
+    this.shouldReconnect = true;
   }
-  private String repoUsername;
+  private String password;
 
-  public String getRepoPassword() {
-    return repoPassword;
-  }
-  public void setRepoPassword( String repoPassword ) {
-    this.repoPassword = repoPassword;
-    this.resetRepository();
-  }
-  private String repoPassword;
-
-  /**
-   * @return the available repositories information
-   */
-  public RepositoriesMeta getRepositoriesMeta() {
-    return repositoriesMeta;
-  }
-  public void setRepositoriesMeta( RepositoriesMeta repositoriesMeta ) {
-    this.repositoriesMeta = repositoriesMeta;
-    this.resetRepository();
-  }
-  private RepositoriesMeta repositoriesMeta;
-
-  /**
-   * @return the plugin registry used for loading the repository class
-   */
-  public PluginRegistry getPluginRegistry() {
-    return this.pluginRegistry;
-  }
-  public void setPluginRegistry( PluginRegistry pluginRegistry ) {
-    this.pluginRegistry = pluginRegistry;
-    this.resetRepository();
-  }
-  private PluginRegistry pluginRegistry;
+  private boolean shouldReconnect = true;
   //endregion
-
-  /**
-   * Reads the repository information from repositories.xml.
-   * @return <code>null</code> if the repository is not found.
-   */
-  private RepositoryMeta readRepositoryMeta( String repoName ) {
-    RepositoriesMeta repositoriesMeta = this.getRepositoriesMeta();
-
-    try {
-      repositoriesMeta.readData();
-    } catch ( KettleException e ) {
-      logger.debug( "Could not read data from repositories meta (typically respositories.xml)." );
-    }
-
-    return repositoriesMeta.findRepository( repoName );
-  }
 
 
   @Override
-  public Repository getRepository() {
-    if ( this.repository != null ) {
-      return this.repository;
+  public PurRepositoryProxy getRepository() {
+    if( this.shouldReconnect) {
+      this.reconnectToRepository();
     }
+    return this.repository;
 
-    RepositoryMeta repositoryMeta = this.readRepositoryMeta( this.getRepoName() );
-    if( repositoryMeta == null ) {
-      logger.debug("Repository meta information for repository \"{}\" not found.", this.getRepoName() );
-      return null;
-    }
-
-    // Load Repository class
-    PluginRegistry registry = this.getPluginRegistry();
-    Repository repository;
-    try {
-      repository = registry.loadClass(
-        RepositoryPluginType.class,
-        repositoryMeta,
-        Repository.class
-      );
-    } catch ( KettlePluginException e ) {
-      logger.debug( "Unable to load repository class for {}.", repositoryMeta.getId() );
-      return null;
-    }
-
-    // Init and connect to repository
-    repository.init( repositoryMeta );
-    try {
-      repository.connect( this.getRepoUsername(), this.getRepoPassword() );
-    } catch ( KettleException e ) {
-      logger.debug( "Unable to connect to repository \"{}\".", repositoryMeta.getName() );
-      return null;
-    }
-
-    return this.repository = repository;
   }
-  private Repository repository;
+  public void setRepository( PurRepositoryProxy repository ) {
+    this.repository = repository;
+  }
+  private PurRepositoryProxy repository;
 
   /**
    * Resets the repository so that next time {@link #getRepository()} is called a new repository is returned.
    */
-  public void resetRepository() {
+  public void reconnectToRepository() {
     if ( this.repository == null ) {
       return;
     }
 
-    this.repository.disconnect();
-    this.repository = null;
+    if( this.repository.isConnected() ) {
+      this.repository.disconnect();
+    }
+
+    try {
+      this.repository.connect( this.getUsername(), this.getPassword() );
+      this.shouldReconnect = false;
+    } catch ( KettleException e) {
+      logger.debug( "Unable to connect to repository \"{}\".", this.repository.getRepositoryMeta().getId() );
+    }
   }
+
 
 }

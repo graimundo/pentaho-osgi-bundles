@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<blueprint xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
-           xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
+<blueprint            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+                      xmlns:ext="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.0.0"
+                      xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0
+                               http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
+
+
+  <ext:property-placeholder system-properties="fallback"/>
+
+  <bean id="purRepository" class="org.pentaho.osgi.kettle.repository.locator.impl.plugin.PurRepositoryProxy">
+    <argument>
+      <bean class="org.pentaho.di.core.plugins.PluginRegistry" factory-method="getInstance"/>
+    </argument>
+    <property name="locationUrl" value="${repos.url}"/>
+  </bean>
 
   <service interface="org.pentaho.osgi.kettle.repository.locator.api.KettleRepositoryProvider" ranking="150">
     <description>
@@ -9,16 +22,11 @@
       repos.repoName, repos.user and repos.password.
       The repository is initialized and connected to the first time it is accessed.
     </description>
+
     <bean class="org.pentaho.osgi.kettle.repository.locator.impl.plugin.PluginRepositoryProvider">
-      <property name="repoName"     value="${repos.repoName}"/>
-      <property name="repoUsername" value="${repos.user}"/>
-      <property name="repoPassword" value="${repos.password}"/>
-      <property name="repositoriesMeta">
-        <bean class="org.pentaho.di.repository.RepositoriesMeta"/>
-      </property>
-      <property name="pluginRegistry">
-        <bean class="org.pentaho.di.core.plugins.PluginRegistry" factory-method="getInstance"/>
-      </property>
+      <property name="username" value="${repos.user}"/>
+      <property name="password" value="${repos.password}"/>
+      <property name="repository" ref="purRepository"/>
     </bean>
   </service>
 
